@@ -7,11 +7,11 @@ namespace DaddysHere.Services
     public class SonsService
     {
         private readonly IMongoCollection<Son> _sonsCollection;
-        public SonsService(IOptions<SonDatabaseSettings> sonDatabaseSettings)
+        public SonsService(IOptions<DaddysHereDatabaseSettings> daddysHereDatabaseSettings)
         {
-            var mongoClient = new MongoClient(sonDatabaseSettings.Value.ConnectionString);
-            var mongoDatabase = mongoClient.GetDatabase(sonDatabaseSettings.Value.DatabaseName);
-            _sonsCollection = mongoDatabase.GetCollection<Son>(sonDatabaseSettings.Value.SonsCollectionName);
+            var mongoClient = new MongoClient(daddysHereDatabaseSettings.Value.ConnectionString);
+            var mongoDatabase = mongoClient.GetDatabase(daddysHereDatabaseSettings.Value.DatabaseName);
+            _sonsCollection = mongoDatabase.GetCollection<Son>(daddysHereDatabaseSettings.Value.SonsCollectionName);
         }
         //public async Task<List<Son>> GetAsync() =>
         //    await _sonsCollection.Find(_ => true).ToListAsync();

@@ -5,7 +5,7 @@ using System.Globalization;
 
 var builder = WebApplication.CreateBuilder(args);
 
-builder.Services.Configure<SonDatabaseSettings>(builder.Configuration.GetSection("SonDatabase"));
+builder.Services.Configure<DaddysHereDatabaseSettings>(builder.Configuration.GetSection("DaddysHereDatabase"));
 builder.Services.AddSingleton<SonsService>();
 builder.Services.Configure<RequestLocalizationOptions>(options =>
 {

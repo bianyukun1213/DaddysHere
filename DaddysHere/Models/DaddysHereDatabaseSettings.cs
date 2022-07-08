@@ -1,6 +1,6 @@
 ﻿namespace DaddysHere.Models
 {
-    public class SonDatabaseSettings
+    public class DaddysHereDatabaseSettings
     {
         public string ConnectionString { get; set; } = null!;
         public string DatabaseName { get; set; } = null!;
