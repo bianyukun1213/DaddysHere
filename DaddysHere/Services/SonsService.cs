@@ -7,23 +7,15 @@ namespace DaddysHere.Services
     public class SonsService
     {
         private readonly IMongoCollection<Son> _sonsCollection;
-        public SonsService(IOptions<DaddysHereDatabaseSettings> daddysHereDatabaseSettings)
+        private readonly ILogger<SonsService> _logger;
+        public SonsService(IOptions<DaddysHereDatabaseSettings> daddysHereDatabaseSettings, ILogger<SonsService> logger)
         {
             var mongoClient = new MongoClient(daddysHereDatabaseSettings.Value.ConnectionString);
             var mongoDatabase = mongoClient.GetDatabase(daddysHereDatabaseSettings.Value.DatabaseName);
             _sonsCollection = mongoDatabase.GetCollection<Son>(daddysHereDatabaseSettings.Value.SonsCollectionName);
+            _logger = logger;
+            _logger.LogDebug(1, "NLog 已注入到 SonsService。");
         }
-        //public async Task<List<Son>> GetAsync() =>
-        //    await _sonsCollection.Find(_ => true).ToListAsync();
-        //public async Task<Son?> GetAsync(string id) =>
-        //    await _sonsCollection.Find(x => x.Id == id).FirstOrDefaultAsync();
-        //public async Task CreateAsync(Son newSon) =>
-        //    await _sonsCollection.InsertOneAsync(newSon);
-        //public async Task UpdateAsync(string id, Son updatedSon) =>
-        //    await _sonsCollection.ReplaceOneAsync(x => x.Id == id, updatedSon);
-        //public async Task RemoveAsync(string id) =>
-        //    await _sonsCollection.DeleteOneAsync(x => x.Id == id);
-
         public async Task<List<Son>> GetSonsAsync()
         {
             return await _sonsCollection.Find(_ => true).ToListAsync();
@@ -55,6 +47,19 @@ namespace DaddysHere.Services
         public async Task DeleteSonByIdAsync(string id)
         {
             await _sonsCollection.DeleteOneAsync(x => x.Id == id);
+        }
+        public bool IsSonValid(Son son)
+        {
+            int mkLen = son.Markdown?.Length ?? 0;
+            int TempLen = son.Template?.Length ?? 0;
+            bool sonValid = son is not null && son.Name is not null && son.Daddy is not null && son.Name.Length <= 8 && son.Daddy.Length <= 8 && mkLen <= 400 && TempLen <= 12;
+            return sonValid;
+        }
+        public void DeleteExpiredSons()
+        {
+            _logger.LogInformation("正在删除过期儿子。");
+            var res = _sonsCollection.DeleteMany(x => x.Expiration <= DateTime.Now.Date && !x.Reserved);
+            _logger.LogInformation("删除完成，共删除 {count} 个过期儿子。", res.DeletedCount);
         }
     }
 }

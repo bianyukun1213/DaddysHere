@@ -1,50 +1,116 @@
 using DaddysHere.Models;
 using DaddysHere.Services;
+using Hangfire;
+using Hangfire.Mongo;
+using Hangfire.Mongo.Migration.Strategies;
+using Hangfire.Mongo.Migration.Strategies.Backup;
 using Microsoft.AspNetCore.Localization;
 using System.Globalization;
 
-var builder = WebApplication.CreateBuilder(args);
+using NLog;
+using NLog.Web;
+using AspNetCoreRateLimit;
 
-builder.Services.Configure<DaddysHereDatabaseSettings>(builder.Configuration.GetSection("DaddysHereDatabase"));
-builder.Services.AddSingleton<SonsService>();
-builder.Services.Configure<RequestLocalizationOptions>(options =>
+var logger = LogManager.Setup().LoadConfigurationFromAppSettings().GetCurrentClassLogger();
+logger.Debug("初始化……");
+
+try
 {
-    options.DefaultRequestCulture = new RequestCulture("zh-Hanse");
-});
-builder.Services.AddLocalization();
+    var builder = WebApplication.CreateBuilder(args);
 
-// Add services to the container.
+    #region 各种配置
+    builder.Services.AddOptions();
+    builder.Services.AddMemoryCache();
+    builder.Services.Configure<IpRateLimitOptions>(builder.Configuration.GetSection("IpRateLimiting"));
+    builder.Services.Configure<IpRateLimitPolicies>(builder.Configuration.GetSection("IpRateLimitPolicies"));
+    builder.Services.AddInMemoryRateLimiting();
+    builder.Services.AddSingleton<IRateLimitConfiguration, RateLimitConfiguration>();
+    builder.Services.Configure<DaddysHereDatabaseSettings>(builder.Configuration.GetSection("DaddysHereDatabase"));
+    builder.Services.Configure<DaddysHereGeneralSettings>(builder.Configuration.GetSection("DaddysHereGeneral"));
+    builder.Services.AddSingleton<SonsService>();
+    builder.Services.Configure<RequestLocalizationOptions>(options =>
+    {
+        options.DefaultRequestCulture = new RequestCulture("zh-Hanse");
+    });
+    builder.Services.AddLocalization();
+    var migrationOptions = new MongoMigrationOptions
+    {
+        MigrationStrategy = new MigrateMongoMigrationStrategy(),
+        BackupStrategy = new CollectionMongoBackupStrategy(),
+    };
+    var storageOptions = new MongoStorageOptions
+    {
+        MigrationOptions = migrationOptions,
+        CheckQueuedJobsStrategy = CheckQueuedJobsStrategy.TailNotificationsCollection
+    };
+    var config = new ConfigurationBuilder().SetBasePath(Environment.CurrentDirectory).AddJsonFile("appsettings.json").AddInMemoryCollection().Build();
+    var connectionString = config["DaddysHereDatabase:ConnectionString"];
+    var databaseName = config["DaddysHereDatabase:DatabaseName"];
+    string hangfireDBConnectionStr = $"{connectionString}/{databaseName}";
+    logger.Debug($"Hangfire 数据库连接字符串：{hangfireDBConnectionStr}");
+    builder.Services.AddHangfire(options => options.UseMongoStorage(hangfireDBConnectionStr, storageOptions));
+    builder.Services.AddHangfireServer(options => { options.WorkerCount = 1; });
+    var fullCRUDEnabledStr = config["DaddysHereGeneral:EnableFullCRUD"];
+    bool parseRes = bool.TryParse(fullCRUDEnabledStr, out bool fullCRUDEnabled);
+    if (parseRes)
+    {
+        logger.Debug($"启用完整增删查改：{fullCRUDEnabled}");
+    }
+    else
+    {
+        logger.Error("启用完整增删查改 设置项解析失败。");
+    }
+    builder.Logging.ClearProviders();
+    builder.Host.UseNLog();
+    #endregion
 
-builder.Services.AddControllers();
-// Learn more about configuring Swagger/OpenAPI at https://aka.ms/aspnetcore/swashbuckle
-builder.Services.AddEndpointsApiExplorer();
-builder.Services.AddSwaggerGen();
+    // Add services to the container.
 
-var app = builder.Build();
+    builder.Services.AddControllers();
+    // Learn more about configuring Swagger/OpenAPI at https://aka.ms/aspnetcore/swashbuckle
+    builder.Services.AddEndpointsApiExplorer();
+    builder.Services.AddSwaggerGen();
 
-var support = new List<CultureInfo>()
-{
-    new CultureInfo("zh-Hans")
-};
-app.UseRequestLocalization(x =>
-{
-    x.SetDefaultCulture("zh-Hans");
-    x.SupportedCultures = support;
-    x.SupportedUICultures = support;
-    x.AddInitialRequestCultureProvider(new AcceptLanguageHeaderRequestCultureProvider());
-});
+    var app = builder.Build();
 
-// Configure the HTTP request pipeline.
-if (app.Environment.IsDevelopment())
-{
-    app.UseSwagger();
-    app.UseSwaggerUI();
+    #region 国际化、请求频率限制、Hangfire 定时任务
+    var support = new List<CultureInfo>()
+    {
+        new CultureInfo("zh-Hans")
+    };
+    app.UseRequestLocalization(x =>
+    {
+        x.SetDefaultCulture("zh-Hans");
+        x.SupportedCultures = support;
+        x.SupportedUICultures = support;
+        x.AddInitialRequestCultureProvider(new AcceptLanguageHeaderRequestCultureProvider());
+    });
+    app.UseIpRateLimiting();
+    app.UseHangfireDashboard();
+    RecurringJob.AddOrUpdate<SonsService>(x => x.DeleteExpiredSons(), Cron.Daily, TimeZoneInfo.Local);
+    #endregion
+
+    // Configure the HTTP request pipeline.
+    if (app.Environment.IsDevelopment())
+    {
+        app.UseSwagger();
+        app.UseSwaggerUI();
+    }
+
+    app.UseHttpsRedirection();
+
+    app.UseAuthorization();
+
+    app.MapControllers();
+
+    app.Run();
 }
-
-app.UseHttpsRedirection();
-
-app.UseAuthorization();
-
-app.MapControllers();
-
-app.Run();
+catch (Exception exception)
+{
+    logger.Error(exception, "Program 异常，已停止。");
+    throw;
+}
+finally
+{
+    LogManager.Shutdown();
+}
