@@ -117,25 +117,28 @@
   <resheader name="writer">
     <value>System.Resources.ResXResourceWriter, System.Windows.Forms, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b77a5c561934e089</value>
   </resheader>
-  <data name="dataNotFound" xml:space="preserve">
+  <data name="DataNotFound" xml:space="preserve">
     <value>数据不存在</value>
   </data>
-  <data name="permissionDenied" xml:space="preserve">
+  <data name="LimitValueReached" xml:space="preserve">
+    <value>达到限值</value>
+  </data>
+  <data name="PermissionDenied" xml:space="preserve">
     <value>无权限</value>
   </data>
-  <data name="repeatedSubmissionNotAllowed" xml:space="preserve">
+  <data name="RepeatedSubmissionNotAllowed" xml:space="preserve">
     <value>禁止重复提交</value>
   </data>
-  <data name="succeeded" xml:space="preserve">
+  <data name="Succeeded" xml:space="preserve">
     <value>成功</value>
   </data>
-  <data name="thirdPartyServiceError" xml:space="preserve">
+  <data name="ThirdPartyServiceError" xml:space="preserve">
     <value>第三方服务错误</value>
   </data>
-  <data name="unknownError" xml:space="preserve">
+  <data name="UnknownError" xml:space="preserve">
     <value>未知错误</value>
   </data>
-  <data name="wrongData" xml:space="preserve">
+  <data name="WrongData" xml:space="preserve">
     <value>数据错误</value>
   </data>
 </root>

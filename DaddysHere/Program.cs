@@ -28,6 +28,13 @@ try
     builder.Services.Configure<DaddysHereDatabaseSettings>(builder.Configuration.GetSection("DaddysHereDatabase"));
     builder.Services.Configure<DaddysHereGeneralSettings>(builder.Configuration.GetSection("DaddysHereGeneral"));
     builder.Services.AddSingleton<SonsService>();
+    builder.Services.AddCors(options =>
+    {
+        options.AddDefaultPolicy(policy =>
+        {
+            policy.WithOrigins("https://我是你爹.com", "https://*.我是你爹.com", "https://hoppscotch.io", "http://localhost:5000", "https://localhost:5001").AllowAnyHeader().AllowAnyMethod();
+        });
+    });
     builder.Services.Configure<RequestLocalizationOptions>(options =>
     {
         options.DefaultRequestCulture = new RequestCulture("zh-Hanse");
@@ -88,6 +95,7 @@ try
     app.UseIpRateLimiting();
     app.UseHangfireDashboard();
     RecurringJob.AddOrUpdate<SonsService>(x => x.DeleteExpiredSons(), Cron.Daily, TimeZoneInfo.Local);
+    app.UseCors(); // 放在 UseAuthorization 之前
     #endregion
 
     // Configure the HTTP request pipeline.
@@ -97,7 +105,12 @@ try
         app.UseSwaggerUI();
     }
 
-    app.UseHttpsRedirection();
+    #region
+    if (app.Environment.IsProduction())  // 只在生产环境使用 Https 重定向
+    {
+        app.UseHttpsRedirection();
+    }
+    #endregion
 
     app.UseAuthorization();
 

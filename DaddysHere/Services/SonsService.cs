@@ -22,15 +22,15 @@ namespace DaddysHere.Services
         }
         public async Task<List<Son>> GetSonsByNameAsync(string name)
         {
-            return await _sonsCollection.Find(s => s.Name == name).ToListAsync();
+            return await _sonsCollection.Find(s => s.Name.ToLower() == name.ToLower()).ToListAsync();
         }
         public async Task<List<Son>> GetSonsByDaddyAsync(string daddyName)
         {
-            return await _sonsCollection.Find(s => s.Daddy == daddyName).ToListAsync();
+            return await _sonsCollection.Find(s => s.Daddy.ToLower() == daddyName.ToLower()).ToListAsync();
         }
         public async Task<Son?> GetSonByNameAndDaddyAsync(string name, string daddyName)
         {
-            return await _sonsCollection.Find(s => s.Name == name && s.Daddy == daddyName).FirstOrDefaultAsync();
+            return await _sonsCollection.Find(s => s.Name.ToLower() == name.ToLower() && s.Daddy.ToLower() == daddyName.ToLower()).FirstOrDefaultAsync();
         }
         public async Task<Son?> GetSonByIdAsync(string id)
         {
@@ -48,11 +48,17 @@ namespace DaddysHere.Services
         {
             await _sonsCollection.DeleteOneAsync(x => x.Id == id);
         }
+        public async Task<bool> DoesSonsCountReachLimitValueAsync()
+        {
+            const long LIMIT_VALUE = 10000;
+            long estimatedCount = await _sonsCollection.EstimatedDocumentCountAsync();
+            return estimatedCount >= LIMIT_VALUE;
+        }
         public bool IsSonValid(Son son)
         {
             int mkLen = son.Markdown?.Length ?? 0;
             int TempLen = son.Template?.Length ?? 0;
-            bool sonValid = son is not null && son.Name is not null && son.Daddy is not null && son.Name.Length <= 8 && son.Daddy.Length <= 8 && mkLen <= 400 && TempLen <= 12;
+            bool sonValid = son is not null && son.Name is not null && son.Daddy is not null && son.Name.Length <= 10 && son.Daddy.Length <= 10 && mkLen <= 400 && TempLen <= 12;
             return sonValid;
         }
         public void DeleteExpiredSons()

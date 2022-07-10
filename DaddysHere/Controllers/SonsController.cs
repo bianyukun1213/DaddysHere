@@ -32,17 +32,17 @@ namespace DaddysHere.Controllers
             if (!_enableFullCRUD)
             {
                 _logger.LogInformation("未启用完整增删查改，无权操作。");
-                return new StandardReturn(code: 20003, localizer: _localizer);
+                return new StandardReturn(errorType: StandardReturn.ErrorType.PermissionDenied, localizer: _localizer);
             }
             var sons = await _sonsService.GetSonsAsync();
             if (sons.Count == 0)
             {
                 _logger.LogInformation("数据不存在。");
-                return new StandardReturn(code: 20001, localizer: _localizer);
+                return new StandardReturn(errorType: StandardReturn.ErrorType.DataNotFound, localizer: _localizer);
             }
             return new StandardReturn(result: sons, localizer: _localizer);
         }
-        [HttpGet("get-by-name/{name:maxlength(8)}")]
+        [HttpGet("get-by-name/{name:maxlength(10)}")]
         public async Task<StandardReturn> GetSonsByNameAsync(string name)
         {
             _logger.LogInformation("调用 GetSonsByNameAsync，名字：{name}。", name);
@@ -50,41 +50,41 @@ namespace DaddysHere.Controllers
             if (sons.Count == 0)
             {
                 _logger.LogInformation("数据不存在。");
-                return new StandardReturn(code: 20001, localizer: _localizer);
+                return new StandardReturn(errorType: StandardReturn.ErrorType.DataNotFound, localizer: _localizer);
             }
             return new StandardReturn(result: sons, localizer: _localizer);
         }
-        [HttpGet("get-by-daddy/{daddyName:maxlength(8)}")]
+        [HttpGet("get-by-daddy/{daddyName:maxlength(10)}")]
         public async Task<StandardReturn> GetSonsByDaddyAsync(string daddyName)
         {
             _logger.LogInformation("调用 GetSonsByDaddyAsync，爹：{daddyName}。", daddyName);
             if (!_enableFullCRUD)
             {
                 _logger.LogInformation("未启用完整增删查改，无权操作。");
-                return new StandardReturn(code: 20003, localizer: _localizer);
+                return new StandardReturn(errorType: StandardReturn.ErrorType.PermissionDenied, localizer: _localizer);
             }
             var sons = await _sonsService.GetSonsByDaddyAsync(daddyName);
             if (sons.Count == 0)
             {
                 _logger.LogInformation("数据不存在。");
-                return new StandardReturn(code: 20001, localizer: _localizer);
+                return new StandardReturn(errorType: StandardReturn.ErrorType.DataNotFound, localizer: _localizer);
             }
             return new StandardReturn(result: sons, localizer: _localizer);
         }
-        [HttpGet("get-by-name-and-daddy/{daddyName:maxlength(8)}/{name:maxlength(8)}")]
+        [HttpGet("get-by-name-and-daddy/{daddyName:maxlength(10)}/{name:maxlength(10)}")]
         public async Task<StandardReturn> GetSonByNameAndDaddyAsync(string name, string daddyName)
         {
             _logger.LogInformation("调用 GetSonsByNameAndDaddyAsync，名字：{name}，爹：{daddyName}。", name, daddyName);
             if (!_enableFullCRUD)
             {
                 _logger.LogInformation("未启用完整增删查改，无权操作。");
-                return new StandardReturn(code: 20003, localizer: _localizer);
+                return new StandardReturn(errorType: StandardReturn.ErrorType.PermissionDenied, localizer: _localizer);
             }
             var son = await _sonsService.GetSonByNameAndDaddyAsync(name, daddyName);
             if (son is null)
             {
                 _logger.LogInformation("数据不存在。");
-                return new StandardReturn(code: 20001, localizer: _localizer);
+                return new StandardReturn(errorType: StandardReturn.ErrorType.DataNotFound, localizer: _localizer);
             }
             return new StandardReturn(result: son, localizer: _localizer);
         }
@@ -95,13 +95,13 @@ namespace DaddysHere.Controllers
             if (!_enableFullCRUD)
             {
                 _logger.LogInformation("未启用完整增删查改，无权操作。");
-                return new StandardReturn(code: 20003, localizer: _localizer);
+                return new StandardReturn(errorType: StandardReturn.ErrorType.PermissionDenied, localizer: _localizer);
             }
             var son = await _sonsService.GetSonByIdAsync(id);
             if (son is null)
             {
                 _logger.LogInformation("数据不存在。");
-                return new StandardReturn(code: 20001, localizer: _localizer);
+                return new StandardReturn(errorType: StandardReturn.ErrorType.DataNotFound, localizer: _localizer);
             }
             return new StandardReturn(result: son, localizer: _localizer);
         }
@@ -112,7 +112,12 @@ namespace DaddysHere.Controllers
             if (!_enableFullCRUD)
             {
                 _logger.LogInformation("未启用完整增删查改，无权操作。");
-                return new StandardReturn(code: 20003, localizer: _localizer);
+                return new StandardReturn(errorType: StandardReturn.ErrorType.PermissionDenied, localizer: _localizer);
+            }
+            if (await _sonsService.DoesSonsCountReachLimitValueAsync())
+            {
+                _logger.LogInformation("儿子数量达到限值。");
+                return new StandardReturn(errorType: StandardReturn.ErrorType.LimitValueReached, localizer: _localizer);
             }
             var son = await _sonsService.GetSonByNameAndDaddyAsync(newSon.Name, newSon.Daddy);
             if (son is null)
@@ -121,7 +126,7 @@ namespace DaddysHere.Controllers
                 if (!_sonsService.IsSonValid(newSon))
                 {
                     _logger.LogInformation("儿子 {son} 非法。", newSon);
-                    return new StandardReturn(code: 20002, localizer: _localizer);
+                    return new StandardReturn(errorType: StandardReturn.ErrorType.WrongData, localizer: _localizer);
                 }
                 newSon.Expiration = DateTime.Today.AddDays(30);
                 newSon.Reserved = false; // 通过 API 创建的 Son，Reserved 全部设为 false
@@ -130,7 +135,7 @@ namespace DaddysHere.Controllers
                 return new StandardReturn(localizer: _localizer);
             }
             _logger.LogInformation("儿子 {son} 重复。", newSon);
-            return new StandardReturn(code: 20004, localizer: _localizer);
+            return new StandardReturn(errorType: StandardReturn.ErrorType.RepeatedSubmissionNotAllowed, localizer: _localizer);
         }
         [HttpPut("update-by-id/{id:length(24)}")]
         public async Task<StandardReturn> UpdateSonByIdAsync(string id, [FromBody] Son updatedSon)
@@ -139,24 +144,24 @@ namespace DaddysHere.Controllers
             if (!_enableFullCRUD)
             {
                 _logger.LogInformation("未启用完整增删查改，无权操作。");
-                return new StandardReturn(code: 20003, localizer: _localizer);
+                return new StandardReturn(errorType: StandardReturn.ErrorType.PermissionDenied, localizer: _localizer);
             }
             var son = await _sonsService.GetSonByIdAsync(id);
             if (son is null)
             {
                 _logger.LogInformation("数据不存在。");
-                return new StandardReturn(code: 20001, localizer: _localizer);
+                return new StandardReturn(errorType: StandardReturn.ErrorType.DataNotFound, localizer: _localizer);
             }
             if (!_sonsService.IsSonValid(updatedSon))
             {
                 _logger.LogInformation("儿子 {son} 非法。", updatedSon);
-                return new StandardReturn(code: 20002, localizer: _localizer);
+                return new StandardReturn(errorType: StandardReturn.ErrorType.WrongData, localizer: _localizer);
             }
             var potentialSon = await _sonsService.GetSonByNameAndDaddyAsync(updatedSon.Name, updatedSon.Daddy);
             if (potentialSon is not null && potentialSon.Id != id) // 已有使用另一个 Id 的相同父子
             {
                 _logger.LogInformation("儿子 {son} 重复。", updatedSon);
-                return new StandardReturn(code: 20004, localizer: _localizer);
+                return new StandardReturn(errorType: StandardReturn.ErrorType.RepeatedSubmissionNotAllowed, localizer: _localizer);
             }
             updatedSon.Id = son.Id;
             updatedSon.Expiration = DateTime.Today.AddDays(30);
@@ -172,13 +177,13 @@ namespace DaddysHere.Controllers
             if (!_enableFullCRUD)
             {
                 _logger.LogInformation("未启用完整增删查改，无权操作。");
-                return new StandardReturn(code: 20003, localizer: _localizer);
+                return new StandardReturn(errorType: StandardReturn.ErrorType.PermissionDenied, localizer: _localizer);
             }
             var son = await _sonsService.GetSonByIdAsync(id);
             if (son is null)
             {
                 _logger.LogInformation("数据不存在。");
-                return new StandardReturn(code: 20001, localizer: _localizer);
+                return new StandardReturn(errorType: StandardReturn.ErrorType.DataNotFound, localizer: _localizer);
             }
             _logger.LogInformation("删除儿子：{son}。", son);
             await _sonsService.DeleteSonByIdAsync(id);
