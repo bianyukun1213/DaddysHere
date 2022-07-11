@@ -9,7 +9,9 @@ namespace DaddysHere.Models
         [BsonRepresentation(BsonType.ObjectId)]
         public string? Id { get; set; }
         public string Name { get; set; } = null!;
+        public string? Avatar { get; set; }
         public string Daddy { get; set; } = null!;
+        public string? DaddyAvatar { get; set; }
         public string? Markdown { get; set; }
         public long? CloudMusicId { get; set; }
         public string? Template { get; set; }

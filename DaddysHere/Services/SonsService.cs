@@ -1,6 +1,7 @@
 ﻿using DaddysHere.Models;
 using Microsoft.Extensions.Options;
 using MongoDB.Driver;
+using System.Text.RegularExpressions;
 
 namespace DaddysHere.Services
 {
@@ -56,9 +57,29 @@ namespace DaddysHere.Services
         }
         public bool IsSonValid(Son son)
         {
-            int mkLen = son.Markdown?.Length ?? 0;
-            int TempLen = son.Template?.Length ?? 0;
-            bool sonValid = son is not null && son.Name is not null && son.Daddy is not null && son.Name.Length <= 10 && son.Daddy.Length <= 10 && mkLen <= 400 && TempLen <= 12;
+            bool mkValid = (son.Markdown?.Length ?? 0) <= 400;
+            bool tempValid = (son.Template?.Length ?? 0) <= 12;
+            bool avatarValid = true;
+            bool daddyAvatarValid = true;
+            string picRegexStr = @"(http|https)://([\w-]+\.)+[\w-]+(/[\w- ./?%&=]*)+\.(jpg|png|webp|gif)";
+            if (!string.IsNullOrEmpty(son.Avatar))
+            {
+                var m = Regex.Matches(son.Avatar, picRegexStr);
+                if (m.Count != 1)
+                {
+                    avatarValid = false;
+                }
+            }
+            if (!string.IsNullOrEmpty(son.DaddyAvatar))
+            {
+                var m = Regex.Matches(son.DaddyAvatar, picRegexStr);
+                if (m.Count != 1)
+                {
+                    daddyAvatarValid = false;
+                }
+            }
+            long cloudMusicId = son.CloudMusicId ?? 0;
+            bool sonValid = son is not null && !string.IsNullOrEmpty(son.Name) && !string.IsNullOrEmpty(son.Daddy) && son.Name.Length <= 10 && son.Daddy.Length <= 10 && mkValid && tempValid && cloudMusicId >= 0 && avatarValid && daddyAvatarValid;
             return sonValid;
         }
         public void DeleteExpiredSons()
