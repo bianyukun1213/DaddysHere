@@ -20,7 +20,7 @@ namespace DaddysHere.Models
         public bool Reserved { get; set; }
         public override string ToString()
         {
-            return $"Id: {Id}, Name: {Name}, Daddy: {Daddy}, Markdown: {Markdown}, Template: {Template}, Expiration: {Expiration}, Reserved: {Reserved}";
+            return $"Id: {Id}, Name: {Name}, Avatar: {Avatar}, Daddy: {Daddy}, DaddyAvatar: {DaddyAvatar}, Markdown: {Markdown}, CloudMusicId: {CloudMusicId}, Template: {Template}, Expiration: {Expiration}, Reserved: {Reserved}";
         }
     }
 }
