@@ -185,6 +185,11 @@ namespace DaddysHere.Controllers
                 _logger.LogInformation("数据不存在。");
                 return new StandardReturn(errorType: StandardReturn.ErrorType.DataNotFound, localizer: _localizer);
             }
+            if (son.Reserved)
+            {
+                _logger.LogInformation("儿子 {son} 保留，无权操作。", son);
+                return new StandardReturn(errorType: StandardReturn.ErrorType.PermissionDenied, localizer: _localizer);
+            }
             _logger.LogInformation("删除儿子：{son}。", son);
             await _sonsService.DeleteSonByIdAsync(id);
             return new StandardReturn(localizer: _localizer);
