@@ -12,7 +12,7 @@ namespace DaddysHere.Models
         public string? Avatar { get; set; }
         public string Daddy { get; set; } = null!;
         public string? DaddyAvatar { get; set; }
-        public string? Markdown { get; set; }
+        public string Markdown { get; set; } = null!;
         public long? CloudMusicId { get; set; }
         public string? Template { get; set; }
         [BsonDateTimeOptions(Kind = DateTimeKind.Local)] // 反序列化（从 WebAPI 返回）时采用本地时间

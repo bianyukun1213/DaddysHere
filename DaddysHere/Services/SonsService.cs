@@ -57,8 +57,6 @@ namespace DaddysHere.Services
         }
         public bool IsSonValid(Son son)
         {
-            bool mkValid = (son.Markdown?.Length ?? 0) <= 400;
-            bool tempValid = (son.Template?.Length ?? 0) <= 12;
             bool avatarValid = true;
             bool daddyAvatarValid = true;
             string picRegexStr = @"(http|https)://([\w-]+\.)+[\w-]+(/[\w- ./?%&=]*)+\.(jpg|png|webp|gif)";
@@ -79,7 +77,7 @@ namespace DaddysHere.Services
                 }
             }
             long cloudMusicId = son.CloudMusicId ?? 0;
-            bool sonValid = son is not null && !string.IsNullOrEmpty(son.Name) && !string.IsNullOrEmpty(son.Daddy) && son.Name.Length <= 10 && son.Daddy.Length <= 10 && mkValid && tempValid && cloudMusicId >= 0 && avatarValid && daddyAvatarValid;
+            bool sonValid = son is not null && !string.IsNullOrEmpty(son.Name) && !string.IsNullOrEmpty(son.Daddy) && son.Name.Length <= 10 && son.Daddy.Length <= 10 && son.Markdown.Length <= 400 && (son.Template?.Length ?? 0) <= 12 && cloudMusicId >= 0 && avatarValid && daddyAvatarValid;
             return sonValid;
         }
         public void DeleteExpiredSons()
