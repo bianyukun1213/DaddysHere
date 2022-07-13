@@ -114,13 +114,14 @@ namespace DaddysHere.Controllers
                 _logger.LogInformation("未启用完整增删查改，无权操作。");
                 return new StandardReturn(errorType: StandardReturn.ErrorType.PermissionDenied, localizer: _localizer);
             }
-            if (await _sonsService.DoesSonsCountReachLimitValueAsync(newSon.Name) || await _sonsService.DoesSonsCountReachLimitValueAsync())
+            if (await _sonsService.DoesSonsCountReachLimitValueAsync(newSon) || await _sonsService.DoesSonsCountReachLimitValueAsync())
             {
                 _logger.LogInformation("儿子数量达到限值。");
                 return new StandardReturn(errorType: StandardReturn.ErrorType.LimitValueReached, localizer: _localizer);
             }
+            bool isSonUnique = await _sonsService.IsSonNameUniqueAsync(newSon.Name);
             var son = await _sonsService.GetSonByNameAndDaddyAsync(newSon.Name, newSon.Daddy);
-            if (son is null)
+            if (!isSonUnique && son is null)
             {
                 newSon.Id = null;
                 if (!_sonsService.IsSonValid(newSon))
@@ -130,42 +131,47 @@ namespace DaddysHere.Controllers
                 }
                 newSon.Expiration = DateTime.Today.AddDays(30);
                 newSon.Reserved = false; // 通过 API 创建的 Son，Reserved 全部设为 false
+                newSon.Protected = false; // 通过 API 创建的 Son，Protected 全部设为 false
+                newSon.NameUnique = false; // 通过 API 创建的 Son，Unique 全部设为 false
                 _logger.LogInformation("新建儿子：{son}。", newSon);
                 await _sonsService.CreateSonAsync(newSon);
                 return new StandardReturn(localizer: _localizer);
             }
-            _logger.LogInformation("儿子 {son} 重复。", newSon);
+            _logger.LogInformation("儿子 {son} 重复或名字唯一。", newSon);
             return new StandardReturn(errorType: StandardReturn.ErrorType.RepeatedSubmissionNotAllowed, localizer: _localizer);
         }
         [HttpPut("update-by-id/{id:length(24)}")]
         public async Task<StandardReturn> UpdateSonByIdAsync(string id, [FromBody] Son updatedSon)
         {
             _logger.LogInformation("调用 UpdateSonByIdAsync，Id：{id}，儿子：{son}。", id, updatedSon);
-            if (!_enableFullCRUD)
-            {
-                _logger.LogInformation("未启用完整增删查改，无权操作。");
-                return new StandardReturn(errorType: StandardReturn.ErrorType.PermissionDenied, localizer: _localizer);
-            }
             var son = await _sonsService.GetSonByIdAsync(id);
             if (son is null)
             {
                 _logger.LogInformation("数据不存在。");
                 return new StandardReturn(errorType: StandardReturn.ErrorType.DataNotFound, localizer: _localizer);
             }
+            if (!_enableFullCRUD || son.Protected)
+            {
+                _logger.LogInformation("未启用完整增删查改或儿子受保护，无权操作。");
+                return new StandardReturn(errorType: StandardReturn.ErrorType.PermissionDenied, localizer: _localizer);
+            }
+            bool isSonUnique = await _sonsService.IsSonNameUniqueAsync(updatedSon.Name);
+            var potentialSon = await _sonsService.GetSonByNameAndDaddyAsync(updatedSon.Name, updatedSon.Daddy);
+            if ((isSonUnique && updatedSon.Name != son.Name) || (potentialSon is not null && potentialSon.Id != id)) // 新名字唯一（并且这个名字不是自己的，也就是说要修改的不是自己）或已有使用另一个 Id 的相同父子
+            {
+                _logger.LogInformation("儿子 {son} 重复。", updatedSon);
+                return new StandardReturn(errorType: StandardReturn.ErrorType.RepeatedSubmissionNotAllowed, localizer: _localizer);
+            }
             if (!_sonsService.IsSonValid(updatedSon))
             {
                 _logger.LogInformation("儿子 {son} 非法。", updatedSon);
                 return new StandardReturn(errorType: StandardReturn.ErrorType.WrongData, localizer: _localizer);
             }
-            var potentialSon = await _sonsService.GetSonByNameAndDaddyAsync(updatedSon.Name, updatedSon.Daddy);
-            if (potentialSon is not null && potentialSon.Id != id) // 已有使用另一个 Id 的相同父子
-            {
-                _logger.LogInformation("儿子 {son} 重复。", updatedSon);
-                return new StandardReturn(errorType: StandardReturn.ErrorType.RepeatedSubmissionNotAllowed, localizer: _localizer);
-            }
             updatedSon.Id = son.Id;
             updatedSon.Expiration = DateTime.Today.AddDays(30);
             updatedSon.Reserved = son.Reserved;
+            updatedSon.Protected = son.Protected; // 其实这里一定是 false
+            updatedSon.NameUnique = son.NameUnique;
             _logger.LogInformation("更新儿子：{son}。", updatedSon);
             await _sonsService.UpdateSonByIdAsync(id, updatedSon);
             return new StandardReturn(localizer: _localizer);
@@ -185,9 +191,9 @@ namespace DaddysHere.Controllers
                 _logger.LogInformation("数据不存在。");
                 return new StandardReturn(errorType: StandardReturn.ErrorType.DataNotFound, localizer: _localizer);
             }
-            if (son.Reserved)
+            if (son.Reserved || son.Protected)
             {
-                _logger.LogInformation("儿子 {son} 保留，无权操作。", son);
+                _logger.LogInformation("儿子 {son} 保留或受保护，无权操作。", son);
                 return new StandardReturn(errorType: StandardReturn.ErrorType.PermissionDenied, localizer: _localizer);
             }
             _logger.LogInformation("删除儿子：{son}。", son);

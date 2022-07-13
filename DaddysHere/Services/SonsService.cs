@@ -55,11 +55,20 @@ namespace DaddysHere.Services
             long estimatedCount = await _sonsCollection.EstimatedDocumentCountAsync();
             return estimatedCount >= LIMIT_VALUE;
         }
-        public async Task<bool> DoesSonsCountReachLimitValueAsync(string name)
+        public async Task<bool> DoesSonsCountReachLimitValueAsync(Son son)
         {
             const long LIMIT_VALUE = 25;
-            long count = await _sonsCollection.CountDocumentsAsync(s => s.Name == name);
+            long count = await _sonsCollection.CountDocumentsAsync(s => s.Name == son.Name);
             return count >= LIMIT_VALUE;
+        }
+        public async Task<bool> IsSonNameUniqueAsync(string name)
+        {
+            return await _sonsCollection.Find(s => s.Name == name && s.NameUnique).FirstOrDefaultAsync() is not null;
+        }
+        public async Task<bool> IsSonProtectedAsync(string id)
+        {
+            Son? son = await GetSonByIdAsync(id);
+            return son is not null && son.Protected;
         }
         public bool IsSonValid(Son son)
         {
@@ -93,13 +102,14 @@ namespace DaddysHere.Services
             }
             //long cloudMusicId = son.CloudMusicId ?? 0;
             bool cloudMusicIdValid = (son.CloudMusicId?.Length ?? 0) <= 24;
-            bool sonValid = son is not null && !string.IsNullOrEmpty(son.Name) && !string.IsNullOrEmpty(son.Daddy) && son.Name.Length <= 10 && son.Daddy.Length <= 10 && son.Markdown.Length <= 400 && (son.Template?.Length ?? 0) <= 12 && avatarValid && daddyAvatarValid && backgroundValid && cloudMusicIdValid;
+            // 名字（<=16 字）、爹名（<=16 字）、Markdown（<=400 字）、模板名（<=16 字）必须
+            bool sonValid = son is not null && !string.IsNullOrEmpty(son.Name) && !string.IsNullOrEmpty(son.Daddy) && !string.IsNullOrEmpty(son.Template) && son.Name.Length <= 10 && son.Daddy.Length <= 10 && son.Markdown.Length <= 400 && son.Template.Length <= 10 && avatarValid && daddyAvatarValid && backgroundValid && cloudMusicIdValid;
             return sonValid;
         }
         public void DeleteExpiredSons()
         {
             _logger.LogInformation("正在删除过期儿子。");
-            var res = _sonsCollection.DeleteMany(x => x.Expiration <= DateTime.Now.Date && !x.Reserved);
+            var res = _sonsCollection.DeleteMany(s => s.Expiration <= DateTime.Now.Date && !s.Reserved && !s.Protected);
             _logger.LogInformation("删除完成，共删除 {count} 个过期儿子。", res.DeletedCount);
         }
     }
