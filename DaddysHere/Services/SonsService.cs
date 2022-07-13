@@ -51,9 +51,15 @@ namespace DaddysHere.Services
         }
         public async Task<bool> DoesSonsCountReachLimitValueAsync()
         {
-            const long LIMIT_VALUE = 10000;
+            const long LIMIT_VALUE = 30000;
             long estimatedCount = await _sonsCollection.EstimatedDocumentCountAsync();
             return estimatedCount >= LIMIT_VALUE;
+        }
+        public async Task<bool> DoesSonsCountReachLimitValueAsync(string name)
+        {
+            const long LIMIT_VALUE = 25;
+            long count = await _sonsCollection.CountDocumentsAsync(s => s.Name == name);
+            return count >= LIMIT_VALUE;
         }
         public bool IsSonValid(Son son)
         {
@@ -87,7 +93,7 @@ namespace DaddysHere.Services
             }
             //long cloudMusicId = son.CloudMusicId ?? 0;
             bool cloudMusicIdValid = (son.CloudMusicId?.Length ?? 0) <= 24;
-            bool sonValid = son is not null && !string.IsNullOrEmpty(son.Name) && !string.IsNullOrEmpty(son.Daddy) && son.Name.Length <= 10 && son.Daddy.Length <= 10 && son.Markdown.Length <= 400 && (son.Template?.Length ?? 0) <= 12 && avatarValid && daddyAvatarValid && backgroundValid &&cloudMusicIdValid;
+            bool sonValid = son is not null && !string.IsNullOrEmpty(son.Name) && !string.IsNullOrEmpty(son.Daddy) && son.Name.Length <= 10 && son.Daddy.Length <= 10 && son.Markdown.Length <= 400 && (son.Template?.Length ?? 0) <= 12 && avatarValid && daddyAvatarValid && backgroundValid && cloudMusicIdValid;
             return sonValid;
         }
         public void DeleteExpiredSons()

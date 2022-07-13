@@ -114,7 +114,7 @@ namespace DaddysHere.Controllers
                 _logger.LogInformation("未启用完整增删查改，无权操作。");
                 return new StandardReturn(errorType: StandardReturn.ErrorType.PermissionDenied, localizer: _localizer);
             }
-            if (await _sonsService.DoesSonsCountReachLimitValueAsync())
+            if (await _sonsService.DoesSonsCountReachLimitValueAsync(newSon.Name) || await _sonsService.DoesSonsCountReachLimitValueAsync())
             {
                 _logger.LogInformation("儿子数量达到限值。");
                 return new StandardReturn(errorType: StandardReturn.ErrorType.LimitValueReached, localizer: _localizer);
