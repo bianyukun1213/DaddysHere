@@ -102,8 +102,8 @@ namespace DaddysHere.Services
             }
             //long cloudMusicId = son.CloudMusicId ?? 0;
             bool cloudMusicIdValid = (son.CloudMusicId?.Length ?? 0) <= 24;
-            // 名字（<=16 字）、爹名（<=16 字）、Markdown（<=400 字）、模板名（<=16 字）必须
-            bool sonValid = son is not null && !string.IsNullOrEmpty(son.Name) && !string.IsNullOrEmpty(son.Daddy) && !string.IsNullOrEmpty(son.Template) && son.Name.Length <= 10 && son.Daddy.Length <= 10 && son.Markdown.Length <= 400 && son.Template.Length <= 10 && avatarValid && daddyAvatarValid && backgroundValid && cloudMusicIdValid;
+            // 名字（<=16 字）、爹名（<=16 字）、Markdown（<=1000 字）、模板名（<=16 字）必须
+            bool sonValid = son is not null && !string.IsNullOrEmpty(son.Name) && !string.IsNullOrEmpty(son.Daddy) && !string.IsNullOrEmpty(son.Template) && son.Name.Length <= 10 && son.Daddy.Length <= 10 && son.Markdown.Length <= 1000 && son.Template.Length <= 10 && avatarValid && daddyAvatarValid && backgroundValid && cloudMusicIdValid;
             return sonValid;
         }
         public void DeleteExpiredSons()
