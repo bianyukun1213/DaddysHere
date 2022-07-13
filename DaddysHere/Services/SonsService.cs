@@ -59,6 +59,7 @@ namespace DaddysHere.Services
         {
             bool avatarValid = true;
             bool daddyAvatarValid = true;
+            bool backgroundValid = true;
             string picRegexStr = @"(http|https)://([\w-]+\.)+[\w-]+(/[\w- ./?%&=]*)+\.(jpg|png|webp|gif)";
             if (!string.IsNullOrEmpty(son.Avatar))
             {
@@ -76,8 +77,16 @@ namespace DaddysHere.Services
                     daddyAvatarValid = false;
                 }
             }
+            if (!string.IsNullOrEmpty(son.Background))
+            {
+                var m = Regex.Matches(son.Background, picRegexStr);
+                if (m.Count != 1)
+                {
+                    backgroundValid = false;
+                }
+            }
             long cloudMusicId = son.CloudMusicId ?? 0;
-            bool sonValid = son is not null && !string.IsNullOrEmpty(son.Name) && !string.IsNullOrEmpty(son.Daddy) && son.Name.Length <= 10 && son.Daddy.Length <= 10 && son.Markdown.Length <= 400 && (son.Template?.Length ?? 0) <= 12 && cloudMusicId >= 0 && avatarValid && daddyAvatarValid;
+            bool sonValid = son is not null && !string.IsNullOrEmpty(son.Name) && !string.IsNullOrEmpty(son.Daddy) && son.Name.Length <= 10 && son.Daddy.Length <= 10 && son.Markdown.Length <= 400 && (son.Template?.Length ?? 0) <= 12 && cloudMusicId >= 0 && avatarValid && daddyAvatarValid && backgroundValid;
             return sonValid;
         }
         public void DeleteExpiredSons()
