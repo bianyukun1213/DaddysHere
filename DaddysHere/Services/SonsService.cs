@@ -85,8 +85,9 @@ namespace DaddysHere.Services
                     backgroundValid = false;
                 }
             }
-            long cloudMusicId = son.CloudMusicId ?? 0;
-            bool sonValid = son is not null && !string.IsNullOrEmpty(son.Name) && !string.IsNullOrEmpty(son.Daddy) && son.Name.Length <= 10 && son.Daddy.Length <= 10 && son.Markdown.Length <= 400 && (son.Template?.Length ?? 0) <= 12 && cloudMusicId >= 0 && avatarValid && daddyAvatarValid && backgroundValid;
+            //long cloudMusicId = son.CloudMusicId ?? 0;
+            bool cloudMusicIdValid = (son.CloudMusicId?.Length ?? 0) <= 24;
+            bool sonValid = son is not null && !string.IsNullOrEmpty(son.Name) && !string.IsNullOrEmpty(son.Daddy) && son.Name.Length <= 10 && son.Daddy.Length <= 10 && son.Markdown.Length <= 400 && (son.Template?.Length ?? 0) <= 12 && avatarValid && daddyAvatarValid && backgroundValid &&cloudMusicIdValid;
             return sonValid;
         }
         public void DeleteExpiredSons()
