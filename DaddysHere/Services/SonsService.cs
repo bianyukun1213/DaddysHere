@@ -58,12 +58,12 @@ namespace DaddysHere.Services
         public async Task<bool> DoesSonsCountReachLimitValueAsync(Son son)
         {
             const long LIMIT_VALUE = 25;
-            long count = await _sonsCollection.CountDocumentsAsync(s => s.Name == son.Name);
+            long count = await _sonsCollection.CountDocumentsAsync(s => s.Name.ToLower() == son.Name.ToLower());
             return count >= LIMIT_VALUE;
         }
         public async Task<bool> IsSonNameUniqueAsync(string name)
         {
-            return await _sonsCollection.Find(s => s.Name == name && s.NameUnique).FirstOrDefaultAsync() is not null;
+            return await _sonsCollection.Find(s => s.Name.ToLower() == name.ToLower() && s.NameUnique).FirstOrDefaultAsync() is not null;
         }
         public async Task<bool> IsSonProtectedAsync(string id)
         {

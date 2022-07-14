@@ -157,7 +157,7 @@ namespace DaddysHere.Controllers
             }
             bool isSonUnique = await _sonsService.IsSonNameUniqueAsync(updatedSon.Name);
             var potentialSon = await _sonsService.GetSonByNameAndDaddyAsync(updatedSon.Name, updatedSon.Daddy);
-            if ((isSonUnique && updatedSon.Name != son.Name) || (potentialSon is not null && potentialSon.Id != id)) // 新名字唯一（并且这个名字不是自己的，也就是说要修改的不是自己）或已有使用另一个 Id 的相同父子
+            if ((isSonUnique && updatedSon.Name.ToLower() != son.Name.ToLower()) || (potentialSon is not null && potentialSon.Id != id)) // 新名字唯一（并且这个唯一名字不是自己的，也就是说要修改的不是自己）或已有使用另一个 Id 的相同父子
             {
                 _logger.LogInformation("儿子 {son} 重复。", updatedSon);
                 return new StandardReturn(errorType: StandardReturn.ErrorType.RepeatedSubmissionNotAllowed, localizer: _localizer);
