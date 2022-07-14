@@ -3,12 +3,19 @@ using MongoDB.Bson.Serialization.Attributes;
 
 namespace DaddysHere.Models
 {
+    public enum Gender
+    {
+        Unknown,
+        Male,
+        Female
+    }
     public class Son
     {
         [BsonId]
         [BsonRepresentation(BsonType.ObjectId)]
         public string? Id { get; set; }
         public string Name { get; set; } = null!;
+        public Gender Gender { get; set; }
         public string? Avatar { get; set; }
         public string Daddy { get; set; } = null!;
         public string? DaddyAvatar { get; set; }
