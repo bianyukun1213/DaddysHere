@@ -75,7 +75,9 @@ namespace DaddysHere.Services
             bool avatarValid = true;
             bool daddyAvatarValid = true;
             bool backgroundValid = true;
+            bool markdownValid = true;
             string picRegexStr = @"(http|https)://([\w-]+\.)+[\w-]+(/[\w- ./?%&=]*)+\.(jpg|png|webp|gif)";
+            string markdownRegexStr = @"^ *# +.+$"; // Markdown 不应该包含一级标题，一级标题保留
             if (!string.IsNullOrEmpty(son.Avatar))
             {
                 var m = Regex.Matches(son.Avatar, picRegexStr);
@@ -100,10 +102,15 @@ namespace DaddysHere.Services
                     backgroundValid = false;
                 }
             }
+            var matches = Regex.Matches(son.Markdown, markdownRegexStr, RegexOptions.Multiline);
+            if (matches.Count > 0)
+            {
+                markdownValid = false;
+            }
             //long cloudMusicId = son.CloudMusicId ?? 0;
             bool cloudMusicIdValid = (son.CloudMusicId?.Length ?? 0) <= 24;
             // 名字（<=16 字）、爹名（<=16 字）、Markdown（<=1000 字）、模板名（<=16 字）必须
-            bool sonValid = son is not null && !string.IsNullOrEmpty(son.Name) && !string.IsNullOrEmpty(son.Daddy) && !string.IsNullOrEmpty(son.Template) && son.Name.Length <= 10 && son.Daddy.Length <= 10 && Enum.IsDefined<Gender>(son.Gender) && son.Markdown.Length <= 1000 && son.Template.Length <= 10 && avatarValid && daddyAvatarValid && backgroundValid && cloudMusicIdValid;
+            bool sonValid = son is not null && !string.IsNullOrEmpty(son.Name) && !string.IsNullOrEmpty(son.Daddy) && !string.IsNullOrEmpty(son.Template) && !string.IsNullOrEmpty(son.Markdown) && son.Name.Length <= 16 && son.Daddy.Length <= 16 && Enum.IsDefined<Gender>(son.Gender) && markdownValid && son.Template.Length <= 16 && avatarValid && daddyAvatarValid && backgroundValid && cloudMusicIdValid;
             return sonValid;
         }
         public void DeleteExpiredSons()
