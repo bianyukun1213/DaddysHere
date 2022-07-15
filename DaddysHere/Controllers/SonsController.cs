@@ -130,7 +130,7 @@ namespace DaddysHere.Controllers
                     return new StandardReturn(errorType: StandardReturn.ErrorType.WrongData, localizer: _localizer);
                 }
                 newSon.Expiration = DateTime.Today.AddDays(30);
-                newSon.Reserved = false; // 通过 API 创建的 Son，Reserved 全部设为 false
+                //newSon.Reserved = false; // 通过 API 创建的 Son，Reserved 全部设为 false
                 newSon.Protected = false; // 通过 API 创建的 Son，Protected 全部设为 false
                 newSon.NameUnique = false; // 通过 API 创建的 Son，Unique 全部设为 false
                 _logger.LogInformation("新建儿子：{son}。", newSon);
@@ -169,7 +169,7 @@ namespace DaddysHere.Controllers
             }
             updatedSon.Id = son.Id;
             updatedSon.Expiration = DateTime.Today.AddDays(30);
-            updatedSon.Reserved = son.Reserved;
+            //updatedSon.Reserved = son.Reserved;
             updatedSon.Protected = son.Protected; // 其实这里一定是 false
             updatedSon.NameUnique = son.NameUnique;
             _logger.LogInformation("更新儿子：{son}。", updatedSon);
@@ -191,7 +191,7 @@ namespace DaddysHere.Controllers
                 _logger.LogInformation("数据不存在。");
                 return new StandardReturn(errorType: StandardReturn.ErrorType.DataNotFound, localizer: _localizer);
             }
-            if (son.Reserved || son.Protected)
+            if (/*son.Reserved ||*/ son.Protected)
             {
                 _logger.LogInformation("儿子 {son} 保留或受保护，无权操作。", son);
                 return new StandardReturn(errorType: StandardReturn.ErrorType.PermissionDenied, localizer: _localizer);

@@ -116,7 +116,8 @@ namespace DaddysHere.Services
         public void DeleteExpiredSons()
         {
             _logger.LogInformation("正在删除过期儿子。");
-            var res = _sonsCollection.DeleteMany(s => s.Expiration <= DateTime.Now.Date && !s.Reserved && !s.Protected);
+            //var res = _sonsCollection.DeleteMany(s => s.Expiration <= DateTime.Now.Date && !s.Reserved && !s.Protected);
+            var res = _sonsCollection.DeleteMany(s => s.Expiration <= DateTime.Now.Date && !s.Protected);
             _logger.LogInformation("删除完成，共删除 {count} 个过期儿子。", res.DeletedCount);
         }
     }
